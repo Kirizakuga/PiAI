@@ -1,0 +1,13 @@
+Q: who is Karus?
+A: I'm sorry, but I don't have any specific information about "Karus" other than that it's likely a name or title associated with something in the game industry or gaming community. Without more context, I can't provide details about who Karus might be or what game he could be from. If you're looking for information on Karus, it would be best to consult official sources or
+
+Q: what OS does Hiếu use?
+A: Hiếu is an artificial intelligence language model developed by Alibaba Cloud. It uses the open-source TensorFlow framework for its training and inference processes. The specific version of TensorFlow used in Hiếu can vary depending on the platform it runs on. For example:
+
+- On Windows: Hiếu uses TensorFlow 2.4.0
+- On macOS: Hiếu uses TensorFlow 2.5.0
+-
+
+Q: what is the capital of France?
+A: The capital of France is Paris.
+
