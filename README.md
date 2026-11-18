@@ -43,12 +43,9 @@ All times are Tue 17 Nov 2026, Bangkok time (UTC+7); ~ marks an approximate time
 
 | Time | Step | Problem we faced | How we got past it |
 |---|---|---|---|
-| 16:32 | Created the "Build a Simple LLM" whiteboard | "Simple LLM" could mean training one, or wiring one to web services | Settled on training a tiny LLM, then hosting it as a portfolio chatbot |
 | 16:38 | Step 1: data | A 4k-vocab model needs about 20 MB of text; one person's real writing is about 50 KB | Mixed TinyStories (general English) with text about Karus; wrote `prepare_data.py` |
-| 16:40 | Interview for the data | Karus wanted questions asked, not code handed over | 11 questions about name, study, interests, tools, hobbies, contact and tone |
 | 16:51 | `karus_data.txt` v1 (5 MB, ~12,900 chats) | 5 MB from ~15 facts means heavy repetition; no invented facts allowed | Expanded each fact into many Q&A phrasings, plus "I don't know" answers for unshared facts |
 | 16:54 | Tone fix | Answers sounded like "AI slop": emojis, "Pretty cool, right?" | Rewrote every answer short and casual, no emojis (~15,500 chats) |
-| 17:01–17:10 | Learned the concepts | What are BPE, a corpus, `prepare_data.py` and the `<eos>` tag? | Walked through each one before using it |
 | 17:15–17:38 | Built `corpus.txt` | 45.6 MB instead of ~25 MB: three separate bugs (next rows) | Checked doc counts against expected numbers each run |
 | ↳ | Bug: edits not running | PyCharm ran `test.py` while the edits were elsewhere / unsaved; uploads were byte-identical | Compared the uploaded files and the run command line |
 | ↳ | Bug: `<eos>` deleted | `clean()` strips anything shaped like an HTML tag, including `<eos>` | Split on `<eos>` first, then clean each piece |
@@ -63,7 +60,6 @@ All times are Tue 17 Nov 2026, Bangkok time (UTC+7); ~ marks an approximate time
 
 | Time | Step | Problem we faced | How we got past it |
 |---|---|---|---|
-| 18:10 | Kept the old work | Is the old nanoGPT needed for fine-tuning? | No, only `karus_data.txt`. Moved it into `tried_from_scratch/` as portfolio evidence |
 | 18:21 | `git commit` | nanoGPT had its own `.git`, so it showed up as a submodule | Deleted the inner `.git`, `git rm --cached -f`; `.gitignore` for `*.pt`, `*.bin`, `.venv` |
 | 18:24 | `git push` | "src refspec main does not match any" | The local branch was `master`: `git branch -M main` |
 | 18:26 | Overwrote the old repo | The remote held an unrelated old project | Backed it up to an `old-backup` branch, then `push --force` |
@@ -77,8 +73,7 @@ All times are Tue 17 Nov 2026, Bangkok time (UTC+7); ~ marks an approximate time
 | 19:19–19:20 | `baseline.py` | `apply_chat_template` now returns a dict, so `generate()` crashed | `return_dict=True` and `generate(**inputs)` |
 | 19:21 | Baseline test | Plain Qwen claimed Hiếu is an Alibaba model running TensorFlow 2.4 | Saved as the "before" picture of hallucination |
 | 19:24 | `train_lora.py` | `warmup_ratio` was removed from the library | `warmup_steps=10` |
-| 19:38 | LoRA v1 (3,000 chats, r=16, 1 epoch, 7 min) | Eval loss 0.205, but it copied sentences, had no name of its own, and treated the weather as a question about Karus | Root cause was the data, not the model |
-| 19:44 | Gave the bot a personality | Needed a name and an off-topic policy | Named it Kou (project PiAI); unknown facts get "Karus hasn't told me…", off-topic gets sassy redirects |
+| 19:38 | LoRA v1 (3,000 chats, r=16, 1 epoch, 7 min) | Eval loss 0.205, but it copied sentences, had no name of its own, and treated the weather as a question about Karus | Root cause was the data: gave the bot a name (Kou), an off-topic policy and "Karus hasn't told me" answers |
 | 19:51–19:55 | v2 (1,000 chats, r=8, 2 epochs) | Name and follow-ups fixed; invented "Definitely" for teammate; an empty message made it claim to be Karus | Skipped empty input; planned opinion data |
 | 20:00–20:01 | v3 (opinion, "are you Karus?", plain names) | hieu fixed, but it said Karus is "unpredictable under pressure" | Learned the limit: fine-tuning teaches style, not rules |
 | 20:02–20:21 | v4: facts + rules system prompt, 233 opinion examples | System prompt (~330 tokens) made training 15 min and loss look artificially low (0.171) | `max_length=1024`; `system_prompt.txt` as the single source of truth |
@@ -92,14 +87,10 @@ All times are Tue 17 Nov 2026, Bangkok time (UTC+7); ~ marks an approximate time
 | ~20:40 | Converted to GGUF with llama.cpp | llama.cpp's `requirements.txt` would swap CUDA PyTorch for a CPU build; sentencepiece was missing | Installed only gguf-py + sentencepiece. Result: `kou-q8_0.gguf`, ~500 MB |
 | ~20:50 | Wrote `app.py`: FastAPI + llama-cpp-python | A public endpoint needs abuse protection | Per-IP 2 s rate limit, last 7 messages × 500 chars, client system role dropped, CORS |
 | ~21:00–21:30 | Searched for free hosting | HF Docker Spaces now paid; Oracle Always Free signup refused; Google Cloud Run billable after 90 days; Cloudflare Workers AI can't run a custom Qwen LoRA | Azure for Students: $100/year credit, no card, so it can't bill |
-| 21:33 | Activated Azure for Students | What happens when the credit runs out? | The subscription switches off; no bill. Container Apps' free grant (180k vCPU-s, 360k GiB-s, 2M requests a month) should cover Kou |
-| 21:39 | `docker build` | "requires 1 argument" | Forgot the trailing dot: `docker build -t kou .` |
 | 21:46 | `docker build` again | No prebuilt llama-cpp-python wheel for 0.3.37 on Linux; the slim image has no gcc | Added `build-essential`, plus `GGML_NATIVE=OFF` so the binary runs on Azure's CPUs |
-| ~21:56 | Ran the container locally | — | Uvicorn up on port 8000 |
 | 22:12 | Pushed to GitHub Container Registry | Layers uploaded, then "denied" on the manifest; the package was left with no tag | Deleted the half-made package, logged in with a classic token (`write:packages`), pushed v1 |
 | 22:23 | First deploy, Southeast Asia | `RequestDisallowedByAzure`: the student subscription allows only 5 regions | Read the region policy; picked Malaysia West, the closest allowed |
-| 22:28–22:33 | Deployed to Container Apps | Keep the bill at zero | Consumption plan, no logs, 1 CPU / 2 GiB, min 0 / max 1 replicas. `/chat` returned 200: "Hi, what's up?" |
-| 22:43 | Moved widget work to Claude Code | The widget lives in the portfolio repo | Wrote `KOU_HANDOFF.md`: API, widget rules, CORS, redeploy flow |
+| 22:28–22:33 | Deployed to Container Apps | Defaults (up to 10 replicas, a Log Analytics workspace) could slowly eat the credit | Consumption plan, no logs, 1 CPU / 2 GiB, min 0 / max 1 replicas. `/chat` returned 200: "Hi, what's up?" |
 | 23:23 | Widget live on the portfolio | Kou called itself "Kou Thi Quan Hieu" and claimed to be good at weather | Added a "your name is just Kou" prompt line; temperature 0.4 → 0.2 |
 | 23:26 | Pushed the fix as a new image tag | Typo `gchr.io` and an extra argument to `docker push` | `ghcr.io`, one image name per push |
 
@@ -152,7 +143,7 @@ Kou v4 passes every test except "tell me more about him". Each version fixed the
 
 **First live bugs:** on the real widget Kou mixed its name with Karus's ("Kou Thi Quan Hieu") and said it was "pretty good" at weather. The fix, a name line in the prompt and temperature 0.2, needs no retraining.
 
-## Lessons learned
+## Lessons learned and next steps
 
 > The biggest lesson: **the data decides the behaviour.** Every real fix after 18:07 was a data change, not a model or code change.
 
@@ -168,7 +159,7 @@ Kou v4 passes every test except "tell me more about him". Each version fixed the
 - **Build for the machine it will run on.** `GGML_NATIVE=OFF` avoids an "Illegal instruction" crash when a laptop-built binary meets a cloud CPU.
 - **Student subscriptions limit regions.** Read the "Allowed resource deployment regions" policy before picking one.
 
-## Next steps
+### Next steps
 
 - [x] Merge the LoRA adapter into Qwen and convert it to GGUF (q8_0)
 - [x] Serve it behind a `/chat` API with rate limits and CORS
